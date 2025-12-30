@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:3001/api';
+// Use relative URLs for Vercel deployment
+const API_BASE = '/api';
 
 // =====================
 // APPLICATIONS API

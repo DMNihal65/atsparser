@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:all": "concurrently \"npm run server\" \"npm run dev\"",
     "server": "node server/server.js",
     "build": "vite build",
+    "vercel-build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
