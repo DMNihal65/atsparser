@@ -1,0 +1,111 @@
+/* Animation for notification slide in */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+/* CodeMirror customizations for light theme */
+.cm-editor {
+  height: 100% !important;
+  font-size: 13px;
+  background: #ffffff !important;
+}
+
+.cm-scroller {
+  overflow: auto;
+}
+
+.cm-content {
+  padding: 16px 0;
+}
+
+.cm-gutters {
+  background: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+.cm-lineNumbers .cm-gutterElement {
+  padding: 0 12px;
+  color: #94a3b8;
+}
+
+.cm-activeLine {
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+
+.cm-activeLineGutter {
+  background: rgba(16, 185, 129, 0.12) !important;
+}
+
+/* Score animation */
+@keyframes score-fill {
+  from {
+    stroke-dasharray: 0 251.2;
+  }
+}
+
+.score-circle {
+  animation: score-fill 1s ease-out forwards;
+}
+
+/* Subtle shadow for cards */
+.card-shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.card-shadow-lg {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* Textarea placeholder style */
+textarea::placeholder {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+/* Button hover lift effect */
+button {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all 0.2s ease;
+}
+
+/* Focus ring - emerald */
+input:focus,
+textarea:focus,
+button:focus-visible {
+  outline: none;
+  ring: 2px;
+  ring-color: rgba(16, 185, 129, 0.5);
+}
+
+/* Passcode input styles */
+.passcode-input {
+  letter-spacing: 0.5em;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
