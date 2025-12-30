@@ -22,12 +22,10 @@ export default function PdfPreview({ latex, isOptimized }) {
         setHasPreview(false);
 
         try {
-            // Submit the form to the iframe
             if (formRef.current) {
                 formRef.current.submit();
                 setLastCompiled(new Date().toLocaleTimeString());
 
-                // Set hasPreview after a delay to show the iframe
                 setTimeout(() => {
                     setHasPreview(true);
                     setIsLoading(false);
@@ -40,13 +38,11 @@ export default function PdfPreview({ latex, isOptimized }) {
         }
     }, [latex]);
 
-    // Handle iframe load event
     const handleIframeLoad = () => {
         setIsLoading(false);
         setHasPreview(true);
     };
 
-    // Auto-generate on mount and when latex changes (debounced)
     useEffect(() => {
         const timer = setTimeout(() => {
             if (latex && latex.trim().length > 100) {
@@ -57,7 +53,6 @@ export default function PdfPreview({ latex, isOptimized }) {
         return () => clearTimeout(timer);
     }, [latex, generatePdf]);
 
-    // Download PDF in new tab
     const handleDownload = () => {
         const form = document.createElement('form');
         form.method = 'POST';
@@ -94,7 +89,6 @@ export default function PdfPreview({ latex, isOptimized }) {
         document.body.removeChild(form);
     };
 
-    // Copy LaTeX
     const copyLatex = async () => {
         try {
             await navigator.clipboard.writeText(latex);
@@ -105,7 +99,6 @@ export default function PdfPreview({ latex, isOptimized }) {
         }
     };
 
-    // Open in Overleaf
     const openInOverleaf = () => {
         try {
             const encoded = btoa(unescape(encodeURIComponent(latex)));
@@ -117,8 +110,8 @@ export default function PdfPreview({ latex, isOptimized }) {
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-900 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
-            {/* Hidden form for PDF generation - targets the iframe */}
+        <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 overflow-hidden card-shadow">
+            {/* Hidden form for PDF generation */}
             <form
                 ref={formRef}
                 method="POST"
@@ -134,39 +127,39 @@ export default function PdfPreview({ latex, isOptimized }) {
             </form>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-slate-800/50 border-b border-slate-700/50">
+            <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
                 <div className="flex items-center gap-2">
-                    <Eye className="w-5 h-5 text-cyan-400" />
-                    <span className="font-semibold text-white">PDF Preview</span>
+                    <Eye className="w-5 h-5 text-emerald-600" />
+                    <span className="font-semibold text-slate-700">PDF Preview</span>
                     {isOptimized && (
-                        <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 font-medium">
                             Optimized
                         </span>
                     )}
                 </div>
                 <div className="flex items-center gap-2">
                     {lastCompiled && (
-                        <span className="text-xs text-slate-500">{lastCompiled}</span>
+                        <span className="text-xs text-slate-400">{lastCompiled}</span>
                     )}
                     <button
                         onClick={generatePdf}
                         disabled={isLoading}
-                        className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 disabled:opacity-50 transition-colors text-slate-300"
+                        className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 transition-colors text-slate-600"
                         title="Refresh Preview"
                     >
                         <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
                     </button>
                     <button
                         onClick={copyLatex}
-                        className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors text-slate-300"
+                        className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors text-slate-600"
                         title="Copy LaTeX"
                     >
-                        {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                        {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                     </button>
                     <button
                         onClick={handleDownload}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all text-sm text-white font-medium shadow-lg shadow-purple-500/25"
-                        title="Open PDF in new tab"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 transition-colors text-sm text-white font-medium"
+                        title="Download PDF"
                     >
                         <Download className="w-4 h-4" />
                         Download
@@ -175,35 +168,35 @@ export default function PdfPreview({ latex, isOptimized }) {
             </div>
 
             {/* Preview Area */}
-            <div className="flex-1 relative bg-white">
+            <div className="flex-1 relative bg-slate-100">
                 {isLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-slate-900/95 z-10">
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/90 z-10">
                         <div className="text-center">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"></div>
-                            <p className="text-slate-300 font-medium">Compiling LaTeX...</p>
+                            <div className="w-12 h-12 mx-auto mb-4 rounded-full border-3 border-emerald-500 border-t-transparent animate-spin"></div>
+                            <p className="text-slate-700 font-medium">Compiling LaTeX...</p>
                             <p className="text-slate-500 text-sm mt-1">This may take 5-10 seconds</p>
                         </div>
                     </div>
                 )}
 
                 {error && !isLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
+                    <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                         <div className="text-center p-6 max-w-md">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-500/10 flex items-center justify-center">
-                                <AlertTriangle className="w-8 h-8 text-red-400" />
+                            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-50 flex items-center justify-center">
+                                <AlertTriangle className="w-7 h-7 text-red-500" />
                             </div>
-                            <h3 className="text-red-400 font-medium mb-2">Preview Error</h3>
+                            <h3 className="text-red-600 font-medium mb-2">Preview Error</h3>
                             <p className="text-slate-500 text-sm mb-4">{error}</p>
                             <div className="flex gap-2 justify-center">
                                 <button
                                     onClick={generatePdf}
-                                    className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm transition-colors"
+                                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm transition-colors"
                                 >
                                     Try Again
                                 </button>
                                 <button
                                     onClick={handleDownload}
-                                    className="px-4 py-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 text-sm transition-colors"
+                                    className="px-4 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm transition-colors"
                                 >
                                     Open in New Tab
                                 </button>
@@ -213,18 +206,18 @@ export default function PdfPreview({ latex, isOptimized }) {
                 )}
 
                 {!hasPreview && !isLoading && !error && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
+                    <div className="absolute inset-0 flex items-center justify-center bg-white">
                         <div className="text-center p-6">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-800 flex items-center justify-center">
-                                <FileText className="w-8 h-8 text-slate-600" />
+                            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
+                                <FileText className="w-7 h-7 text-slate-400" />
                             </div>
-                            <h3 className="text-slate-400 font-medium mb-2">Generating Preview...</h3>
-                            <p className="text-slate-500 text-sm mb-4">
+                            <h3 className="text-slate-600 font-medium mb-2">Generating Preview...</h3>
+                            <p className="text-slate-400 text-sm mb-4">
                                 Preview will load automatically
                             </p>
                             <button
                                 onClick={generatePdf}
-                                className="px-4 py-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 text-sm transition-colors"
+                                className="px-4 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-medium transition-colors border border-emerald-200"
                             >
                                 Generate Now
                             </button>
@@ -232,7 +225,6 @@ export default function PdfPreview({ latex, isOptimized }) {
                     </div>
                 )}
 
-                {/* PDF iframe - always rendered, form submits to it */}
                 <iframe
                     ref={iframeRef}
                     name="pdfPreviewIframe"
@@ -243,14 +235,14 @@ export default function PdfPreview({ latex, isOptimized }) {
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-2.5 bg-slate-800/50 border-t border-slate-700/30">
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200">
                 <div className="flex items-center justify-between">
                     <p className="text-xs text-slate-500">
-                        Preview via TeXLive.net • Click refresh to recompile
+                        Preview via TeXLive.net
                     </p>
                     <button
                         onClick={openInOverleaf}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs transition-colors border border-green-500/20"
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs transition-colors border border-emerald-200 font-medium"
                     >
                         <ExternalLink className="w-3 h-3" />
                         Overleaf

@@ -1,42 +1,39 @@
 import { useState, useEffect } from "react";
-import {
-  Zap,
-  Sparkles,
-  Save,
-  FolderOpen,
-  ArrowLeftRight,
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-} from "lucide-react";
-
 import Header from "./components/Header";
 import ResumeEditor from "./components/ResumeEditor";
 import JobDescriptionInput from "./components/JobDescriptionInput";
 import AnalysisResults from "./components/AnalysisResults";
 import PdfPreview from "./components/PdfPreview";
 import SavedResumes from "./components/SavedResumes";
-
+import PasscodeAuth from "./components/PasscodeAuth";
 import { analyzeResume, optimizeResume } from "./services/gemini";
-import { getDefaultResume, saveResume } from "./services/storage";
-
+import { getResumes, saveResume, deleteResume, getDefaultResume } from "./services/storage";
+import { Search, Wand2, Save, FolderOpen, Eye, EyeOff, X, CheckCircle, AlertCircle } from "lucide-react";
 import "./App.css";
 
 export default function App() {
-  // State
-  const [latex, setLatex] = useState("");
+  // Authentication
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem("ats_authenticated") === "true";
+  });
+
+  // Core state
+  const [latex, setLatex] = useState(getDefaultResume());
   const [optimizedLatex, setOptimizedLatex] = useState(null);
   const [showOptimized, setShowOptimized] = useState(false);
   const [jobDescription, setJobDescription] = useState("");
   const [analysis, setAnalysis] = useState(null);
+
+  // UI state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [showSavedResumes, setShowSavedResumes] = useState(false);
+  const [savedResumes, setSavedResumes] = useState([]);
   const [notification, setNotification] = useState(null);
 
-  // Load default resume on mount
+  // Load saved resumes on mount
   useEffect(() => {
-    setLatex(getDefaultResume());
+    setSavedResumes(getResumes());
   }, []);
 
   // Show notification
@@ -48,25 +45,18 @@ export default function App() {
   // Handle analyze
   const handleAnalyze = async () => {
     if (!jobDescription.trim()) {
-      showNotification("Please enter a job description first", "error");
+      showNotification("Please enter a job description", "error");
       return;
     }
 
     setIsAnalyzing(true);
-    setAnalysis(null);
-    setOptimizedLatex(null);
-    setShowOptimized(false);
-
     try {
       const result = await analyzeResume(latex, jobDescription);
       setAnalysis(result);
-      showNotification(
-        `Analysis complete! ATS Score: ${result.score}%`,
-        result.score >= 70 ? "success" : "warning"
-      );
+      showNotification(`Analysis complete! Score: ${result.score}%`);
     } catch (error) {
       console.error("Analysis error:", error);
-      showNotification("Failed to analyze resume. Please try again.", "error");
+      showNotification("Failed to analyze resume", "error");
     } finally {
       setIsAnalyzing(false);
     }
@@ -80,15 +70,14 @@ export default function App() {
     }
 
     setIsOptimizing(true);
-
     try {
-      const result = await optimizeResume(latex, analysis, jobDescription);
-      setOptimizedLatex(result);
+      const optimized = await optimizeResume(latex, analysis, jobDescription);
+      setOptimizedLatex(optimized);
       setShowOptimized(true);
-      showNotification("Resume optimized successfully! Review the changes.", "success");
+      showNotification("Resume optimized successfully!");
     } catch (error) {
       console.error("Optimization error:", error);
-      showNotification("Failed to optimize resume. Please try again.", "error");
+      showNotification("Failed to optimize resume", "error");
     } finally {
       setIsOptimizing(false);
     }
@@ -96,134 +85,122 @@ export default function App() {
 
   // Handle save
   const handleSave = () => {
-    const name = prompt("Enter a name for this resume:", `Resume - ${new Date().toLocaleDateString()}`);
-    if (!name) return;
-
-    try {
+    const name = prompt("Enter a name for this resume:");
+    if (name) {
       saveResume(name, latex, jobDescription, analysis, optimizedLatex);
-      showNotification("Resume saved successfully!", "success");
-    } catch (error) {
-      console.error("Save error:", error);
-      showNotification("Failed to save resume", "error");
+      setSavedResumes(getResumes());
+      showNotification("Resume saved successfully!");
     }
   };
 
-  // Handle load saved resume
-  const handleLoadResume = (resume) => {
+  // Handle load
+  const handleLoad = (resume) => {
     setLatex(resume.latex);
     setJobDescription(resume.jobDescription || "");
-    setAnalysis(resume.analysis || null);
-    setOptimizedLatex(resume.optimizedLatex || null);
+    setAnalysis(resume.analysis);
+    setOptimizedLatex(resume.optimizedLatex);
     setShowOptimized(false);
-    showNotification(`Loaded: ${resume.name}`, "success");
+    setShowSavedResumes(false);
+    showNotification(`Loaded: ${resume.name}`);
   };
 
-  // Toggle between original and optimized
-  const toggleOptimized = () => {
-    if (optimizedLatex) {
-      setShowOptimized(!showOptimized);
+  // Handle delete
+  const handleDelete = (id) => {
+    if (confirm("Delete this resume?")) {
+      deleteResume(id);
+      setSavedResumes(getResumes());
+      showNotification("Resume deleted");
     }
   };
 
-  // Get current latex to display
+  // Reset to default
+  const handleReset = () => {
+    if (confirm("Reset to default resume?")) {
+      setLatex(getDefaultResume());
+      setOptimizedLatex(null);
+      setShowOptimized(false);
+      setAnalysis(null);
+    }
+  };
+
+  // If not authenticated, show passcode screen
+  if (!isAuthenticated) {
+    return <PasscodeAuth onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
+
   const currentLatex = showOptimized && optimizedLatex ? optimizedLatex : latex;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-slate-50">
       <Header />
 
-      {/* Notification */}
-      {notification && (
-        <div
-          className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-slide-in ${notification.type === "success"
-              ? "bg-green-500/20 border border-green-500/30 text-green-400"
-              : notification.type === "warning"
-                ? "bg-yellow-500/20 border border-yellow-500/30 text-yellow-400"
-                : "bg-red-500/20 border border-red-500/30 text-red-400"
-            }`}
-        >
-          {notification.type === "success" ? (
-            <CheckCircle className="w-5 h-5" />
-          ) : (
-            <AlertCircle className="w-5 h-5" />
-          )}
-          <span className="text-sm font-medium">{notification.message}</span>
-        </div>
-      )}
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-6">
+        {/* Action Bar */}
+        <div className="flex items-center justify-between mb-6 bg-white rounded-xl border border-slate-200 p-4 card-shadow">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing || !jobDescription.trim()}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-medium transition-colors"
+            >
+              <Search className={`w-4 h-4 ${isAnalyzing ? "animate-pulse" : ""}`} />
+              {isAnalyzing ? "Analyzing..." : "Analyze Resume"}
+            </button>
 
-      {/* Action Bar */}
-      <div className="bg-slate-900/80 backdrop-blur-lg border-b border-slate-700/50 sticky top-0 z-40">
-        <div className="max-w-[1800px] mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <button
+              onClick={handleOptimize}
+              disabled={isOptimizing || !analysis}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:bg-slate-50 disabled:text-slate-300 text-slate-700 font-medium transition-colors border border-slate-200"
+            >
+              <Wand2 className={`w-4 h-4 ${isOptimizing ? "animate-spin" : ""}`} />
+              {isOptimizing ? "Optimizing..." : "Optimize with AI"}
+            </button>
+
+            {optimizedLatex && (
               <button
-                onClick={handleAnalyze}
-                disabled={isAnalyzing || !jobDescription.trim()}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium shadow-lg shadow-blue-500/25 transition-all"
+                onClick={() => setShowOptimized(!showOptimized)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors border ${showOptimized
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  }`}
               >
-                {isAnalyzing ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Zap className="w-5 h-5" />
-                )}
-                {isAnalyzing ? "Analyzing..." : "Analyze Resume"}
+                {showOptimized ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                {showOptimized ? "Viewing Optimized" : "View Original"}
               </button>
+            )}
+          </div>
 
-              <button
-                onClick={handleOptimize}
-                disabled={isOptimizing || !analysis}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium shadow-lg shadow-purple-500/25 transition-all"
-              >
-                {isOptimizing ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Sparkles className="w-5 h-5" />
-                )}
-                {isOptimizing ? "Optimizing..." : "Optimize with AI"}
-              </button>
-
-              {optimizedLatex && (
-                <button
-                  onClick={toggleOptimized}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${showOptimized
-                      ? "bg-green-500/20 border-green-500/30 text-green-400"
-                      : "bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white"
-                    }`}
-                >
-                  <ArrowLeftRight className="w-4 h-4" />
-                  {showOptimized ? "Viewing Optimized" : "View Original"}
-                </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSavedResumes(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white hover:bg-slate-50 text-slate-600 font-medium transition-colors border border-slate-200"
+            >
+              <FolderOpen className="w-4 h-4" />
+              History
+              {savedResumes.length > 0 && (
+                <span className="px-1.5 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700">
+                  {savedResumes.length}
+                </span>
               )}
-            </div>
+            </button>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowSavedResumes(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 text-slate-400 hover:text-white transition-all"
-              >
-                <FolderOpen className="w-4 h-4" />
-                Saved Resumes
-              </button>
-
-              <button
-                onClick={handleSave}
-                disabled={!latex}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                <Save className="w-4 h-4" />
-                Save Resume
-              </button>
-            </div>
+            <button
+              onClick={handleSave}
+              disabled={!analysis}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 disabled:bg-slate-50 disabled:text-slate-300 text-emerald-700 font-medium transition-colors border border-emerald-200 disabled:border-slate-200"
+            >
+              <Save className="w-4 h-4" />
+              Save
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-[1800px] mx-auto w-full px-6 py-6">
-        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-180px)]">
-          {/* Left Column - Editor & Job Description */}
-          <div className="col-span-4 flex flex-col gap-6">
-            <div className="flex-1 min-h-0">
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Column - Inputs */}
+          <div className="col-span-5 space-y-6">
+            <div className="h-[400px]">
               <ResumeEditor
                 value={currentLatex}
                 onChange={(val) => {
@@ -233,6 +210,7 @@ export default function App() {
                     setLatex(val);
                   }
                 }}
+                onReset={handleReset}
               />
             </div>
             <div className="h-[300px]">
@@ -243,24 +221,50 @@ export default function App() {
             </div>
           </div>
 
-          {/* Middle Column - Analysis */}
-          <div className="col-span-4 min-h-0">
-            <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
-          </div>
-
-          {/* Right Column - PDF Preview */}
-          <div className="col-span-4 min-h-0">
-            <PdfPreview latex={currentLatex} isOptimized={showOptimized} />
+          {/* Right Column - Results & Preview */}
+          <div className="col-span-7 space-y-6">
+            <div className="h-[400px]">
+              <PdfPreview latex={currentLatex} isOptimized={showOptimized} />
+            </div>
+            <div className="max-h-[300px] overflow-y-auto">
+              <AnalysisResults analysis={analysis} isLoading={isAnalyzing} />
+            </div>
           </div>
         </div>
       </main>
 
       {/* Saved Resumes Modal */}
-      {showSavedResumes && (
-        <SavedResumes
-          onLoad={handleLoadResume}
-          onClose={() => setShowSavedResumes(false)}
-        />
+      <SavedResumes
+        isOpen={showSavedResumes}
+        onClose={() => setShowSavedResumes(false)}
+        resumes={savedResumes}
+        onLoad={handleLoad}
+        onDelete={handleDelete}
+      />
+
+      {/* Notification */}
+      {notification && (
+        <div className="fixed bottom-6 right-6 z-50 animate-slide-in">
+          <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border ${notification.type === "error"
+                ? "bg-red-50 border-red-200 text-red-700"
+                : "bg-emerald-50 border-emerald-200 text-emerald-700"
+              }`}
+          >
+            {notification.type === "error" ? (
+              <AlertCircle className="w-5 h-5" />
+            ) : (
+              <CheckCircle className="w-5 h-5" />
+            )}
+            <span className="font-medium">{notification.message}</span>
+            <button
+              onClick={() => setNotification(null)}
+              className="p-1 hover:bg-white/50 rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
