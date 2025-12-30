@@ -98,8 +98,7 @@ input:focus,
 textarea:focus,
 button:focus-visible {
   outline: none;
-  ring: 2px;
-  ring-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
 }
 
 /* Passcode input styles */
