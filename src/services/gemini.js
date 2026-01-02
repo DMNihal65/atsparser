@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = "AIzaSyBIEtTx_mFu_QKmphEWkNM1NTQwoELxVNE";
+const API_KEY = "AIzaSyAWE7XQsBmnYlUuK8ACjD-RevZNRd-5q6M";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const analyzeResume = async (resumeContent, jobDescription) => {
