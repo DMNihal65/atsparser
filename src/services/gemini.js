@@ -22,6 +22,7 @@ Provide your analysis in the exact JSON format specified below. Focus on:
 3. Specific, actionable improvements for each section
 4. Keyword matching and density analysis
 5. Content that should be added or emphasized
+6. Don't emphasize the dates mentioned in the experience section; they are correct, and the current year is 2026 for your reference.
 
 IMPORTANT: Calculate the ATS score based on:
 - Keyword match percentage (40% weight)
