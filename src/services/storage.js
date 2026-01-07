@@ -332,7 +332,7 @@ Experienced Software and Data Engineer with 2+ years in full-stack development a
 
 % ========== Project Associate I ==========
 \\begin{twocolentry}{
-    March 2024 – June 2024\\\\
+    March 2024 – June 2025\\\\
 }
 \\textbf{\\Large Project Associate - I -- Full Stack and Data Engineer} \\\\
 \\textbf{Central Manufacturing Technology Institute (CMTI), Bengaluru} \\\\
